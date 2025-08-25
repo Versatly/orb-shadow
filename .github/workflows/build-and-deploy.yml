@@ -1,0 +1,69 @@
+name: Build and Deploy Shadow Apps
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js 22
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Generate Prisma client
+      run: npm run generate
+
+    - name: Type check
+      run: npm run check-types
+
+    - name: Lint code
+      run: npm run lint
+
+    - name: Build applications
+      run: npm run build
+
+    - name: Setup PM2
+      run: npm install -g pm2
+
+    - name: Stop existing PM2 processes
+      run: |
+        pm2 delete shadow-frontend || true
+        pm2 delete shadow-server || true
+      continue-on-error: true
+
+    - name: Start applications with PM2
+      run: |
+        pm2 start ecosystem.config.js
+        pm2 save
+        pm2 startup
+
+    - name: Show PM2 status
+      run: pm2 status
+
+    - name: Wait for applications to be ready
+      run: |
+        echo "Waiting for applications to start..."
+        sleep 10
+        pm2 status
+
+    - name: Health check
+      run: |
+        # Check if shadow-frontend is responding (port 4343)
+        curl -f http://localhost:4343 || echo "Frontend health check failed"
+        
+        # Check if shadow-server is responding (port 4000)  
+        curl -f http://localhost:4000/api/health || echo "Server health check failed"
+      continue-on-error: true

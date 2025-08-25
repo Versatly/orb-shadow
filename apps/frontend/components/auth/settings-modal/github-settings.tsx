@@ -31,14 +31,16 @@ export function GitHubSettings() {
           <div className="flex items-center gap-1.5">
             Connected <Check className="size-3.5 text-green-400" />
           </div>
-          <Button className="w-auto" asChild>
-            <Link
-              href={`https://github.com/settings/installations/${githubStatus?.installationId}`}
-              target="_blank"
-            >
-              Manage on GitHub <ArrowUpRight />
-            </Link>
-          </Button>
+          {githubStatus?.installationId && (
+            <Button className="w-auto" asChild>
+              <Link
+                href={`https://github.com/settings/installations/${githubStatus.installationId}`}
+                target="_blank"
+              >
+                Manage on GitHub <ArrowUpRight />
+              </Link>
+            </Button>
+          )}
         </div>
         {isLoadingRepos ? (
           <div className="text-muted-foreground flex items-center gap-1">

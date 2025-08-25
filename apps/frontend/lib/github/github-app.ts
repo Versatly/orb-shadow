@@ -4,6 +4,9 @@ import { Octokit } from "@octokit/rest";
 const GITHUB_APP_ID = process.env.GITHUB_APP_ID;
 const GITHUB_PRIVATE_KEY = process.env.GITHUB_PRIVATE_KEY;
 
+console.log("[DEBUG] GITHUB_APP_ID:", GITHUB_APP_ID);
+console.log("[DEBUG] GITHUB_APP_SLUG:", process.env.GITHUB_APP_SLUG);
+
 if (!GITHUB_APP_ID || !GITHUB_PRIVATE_KEY) {
   console.warn(
     "Missing required GitHub App environment variables - GitHub App functionality will be disabled"
@@ -30,7 +33,15 @@ export function createPersonalOctokit(): Octokit {
   if (!PERSONAL_GITHUB_TOKEN) {
     throw new Error("Personal GitHub token not configured");
   }
-  return new Octokit({ auth: PERSONAL_GITHUB_TOKEN });
+  // Use Bearer format for fine-grained tokens
+  return new Octokit({ 
+    auth: PERSONAL_GITHUB_TOKEN,
+    request: {
+      headers: {
+        authorization: `Bearer ${PERSONAL_GITHUB_TOKEN}`,
+      },
+    },
+  });
 }
 
 /**
@@ -61,6 +72,7 @@ export async function createInstallationOctokit(
  */
 export function getGitHubAppInstallationUrl() {
   const appSlug = process.env.GITHUB_APP_SLUG;
+  console.log("[DEBUG] GITHUB_APP_SLUG:", appSlug); // Debug temporário
   if (!appSlug) {
     throw new Error("GITHUB_APP_SLUG environment variable is required");
   }
